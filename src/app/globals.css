@@ -12,12 +12,9 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* PizzaFlow is a counter/kiosk ordering app -- always light themed,
+   regardless of OS color scheme, so staff-facing form contrast never
+   depends on the customer's device settings. */
 
 body {
   background: var(--background);
