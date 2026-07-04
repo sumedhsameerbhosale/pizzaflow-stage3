@@ -1,23 +1,29 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getDiscountQtyThreshold } from "@/lib/settings";
+import { getUserRole } from "@/lib/auth";
 import OrderForm from "@/components/order/OrderForm";
 import Logo from "@/components/Logo";
 import LogoutButton from "@/components/LogoutButton";
 import type { MenuItem } from "@/lib/types";
 
 // proxy.ts already redirects unauthenticated visitors to /login before
-// this page renders; RLS (orders/order_items INSERT and SELECT `to
-// authenticated`) is the real security boundary either way.
+// this page renders, and redirects staff away from /admin/*; RLS
+// (orders/order_items INSERT `to authenticated`) is the real security
+// boundary either way.
 export default async function Home() {
   const supabase = await createClient();
-  const [{ data: menuItems, error }, discountQtyThreshold] = await Promise.all([
-    supabase
-      .from("menu_items")
-      .select("id, category, name, price, is_active")
-      .eq("is_active", true)
-      .order("price", { ascending: true }),
-    getDiscountQtyThreshold(supabase),
-  ]);
+  const [{ data: menuItems, error }, discountQtyThreshold, { data: userData }] =
+    await Promise.all([
+      supabase
+        .from("menu_items")
+        .select("id, category, name, price, is_active")
+        .eq("is_active", true)
+        .order("price", { ascending: true }),
+      getDiscountQtyThreshold(supabase),
+      supabase.auth.getUser(),
+    ]);
+  const role = getUserRole(userData.user);
 
   if (error || !menuItems) {
     return (
@@ -41,7 +47,15 @@ export default async function Home() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
       <header className="relative mb-8 flex flex-col items-center text-center">
-        <div className="absolute right-0 top-0">
+        <div className="absolute right-0 top-0 flex items-center gap-2">
+          {role === "admin" && (
+            <Link
+              href="/admin/orders"
+              className="rounded-md border px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              Admin dashboard
+            </Link>
+          )}
           <LogoutButton />
         </div>
         <Logo className="mb-2 h-10 w-10" />

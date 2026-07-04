@@ -21,6 +21,12 @@ export default function AdminNav({
       <div className="flex items-center gap-2">
         <Logo className="h-6 w-6" />
         <span className="mr-2 text-lg font-bold text-gray-900">PizzaFlow Admin</span>
+        <Link
+          href="/"
+          className="rounded-md px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
+        >
+          Take Orders
+        </Link>
         <Link href="/admin/orders" className={linkClass("orders")}>
           Orders
         </Link>

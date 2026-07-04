@@ -1,20 +1,26 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getUserRole } from "@/lib/auth";
 
 /**
  * Shared by src/proxy.ts (Next.js 16 renamed `middleware` to `proxy`).
  * Refreshes the Supabase session on every gated request (`/` and
- * `/admin/*`) and gates access: unauthenticated visitors to a gated
- * path (other than /login itself) are redirected to
- * /login?next=<original path>; already-authenticated visitors to
- * /login are redirected to that `next` path (or /admin/orders if
- * there isn't one).
+ * `/admin/*`) and gates access:
+ *   - Unauthenticated visitors to a gated path (other than /login
+ *     itself) are redirected to /login?next=<original path>.
+ *   - Authenticated non-admin ("staff") visitors to /admin/* are
+ *     redirected to `/` -- staff can take orders but not see order
+ *     history, insights, or settings.
+ *   - Already-authenticated visitors to /login are redirected to
+ *     `next` (if their role allows it) or a role-appropriate default
+ *     (/admin/orders for admins, `/` for staff).
  *
  * This is an *optimistic* check (per Next.js's own auth guidance) --
  * the real authorization boundary is Postgres RLS (orders/order_items
- * INSERT and SELECT are both `to authenticated` only), so even if this
- * redirect were ever bypassed, no data could actually be read or
- * written.
+ * INSERT is `to authenticated`, SELECT and app_settings UPDATE require
+ * the "admin" role via the JWT's app_metadata -- see
+ * supabase/add_roles.sql), so even if this redirect were ever
+ * bypassed, no data could actually be read or written by the wrong role.
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -48,6 +54,8 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isLoginRoute = pathname === "/login";
+  const isAdminRoute = pathname.startsWith("/admin");
+  const role = getUserRole(user);
 
   if (!isLoginRoute && !user) {
     const url = request.nextUrl.clone();
@@ -56,10 +64,19 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (user && isAdminRoute && role !== "admin") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   if (isLoginRoute && user) {
     const next = request.nextUrl.searchParams.get("next");
+    const nextAllowed =
+      !!next && next.startsWith("/") && (role === "admin" || !next.startsWith("/admin"));
     const url = request.nextUrl.clone();
-    url.pathname = next && next.startsWith("/") ? next : "/admin/orders";
+    url.pathname = nextAllowed ? next! : role === "admin" ? "/admin/orders" : "/";
     url.search = "";
     return NextResponse.redirect(url);
   }

@@ -80,28 +80,28 @@ alter table order_items enable row level security;
 alter table app_settings enable row level security;
 
 -- menu_items: public read only.
--- Counter staff place orders without logging in (Stage 1's own assumption),
--- so anyone loading the order page must be able to read the menu without
--- auth. No public writes -- menu changes are a DB-console operation only.
+-- The order page (`/`) itself requires an authenticated session (see
+-- src/proxy.ts), but a public read policy is still harmless and kept
+-- simple here -- no public writes either way, menu changes are a
+-- DB-console operation only.
 create policy "menu_items_public_read"
   on menu_items for select
   to anon, authenticated
   using (true);
 
--- orders: INSERT and SELECT both restricted to authenticated.
--- The order page (`/`) is gated by src/proxy.ts behind the same
--- Supabase Auth session used for /admin/*, so counter staff must log
--- in before they can place an order. Reading back all orders (customer
--- names, phones, revenue) is the admin view, gated the same way.
+-- orders: INSERT open to any authenticated user (staff place orders
+-- too, via `/`, gated by src/proxy.ts). SELECT requires the "admin"
+-- role in app_metadata (see supabase/add_roles.sql) -- reading back all
+-- orders (customer names, phones, revenue) is the admin-only view.
 create policy "orders_authenticated_insert"
   on orders for insert
   to authenticated
   with check (true);
 
-create policy "orders_authenticated_select"
+create policy "orders_admin_select"
   on orders for select
   to authenticated
-  using (true);
+  using ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
 -- order_items: same reasoning as orders.
 create policy "order_items_authenticated_insert"
@@ -109,26 +109,26 @@ create policy "order_items_authenticated_insert"
   to authenticated
   with check (true);
 
-create policy "order_items_authenticated_select"
+create policy "order_items_admin_select"
   on order_items for select
   to authenticated
-  using (true);
+  using ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
--- app_settings: public read (the unauthenticated order flow needs the
--- live threshold to price a bill), write restricted to authenticated
--- (admin) sessions only -- the /admin/settings page is itself gated by
--- proxy.ts, and this policy is the defense-in-depth backstop, same
+-- app_settings: public read (the order flow needs the live threshold
+-- to price a bill), write restricted to the "admin" role -- the
+-- /admin/settings page itself is gated by proxy.ts (staff can't even
+-- reach it), and this policy is the defense-in-depth backstop, same
 -- pattern as every other write in this schema.
 create policy "app_settings_public_read"
   on app_settings for select
   to anon, authenticated
   using (true);
 
-create policy "app_settings_authenticated_update"
+create policy "app_settings_admin_update"
   on app_settings for update
   to authenticated
-  using (true)
-  with check (true);
+  using ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin')
+  with check ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
 -- No UPDATE/DELETE policies are defined for anon or authenticated on
 -- menu_items/orders/order_items -- RLS denies by default when no policy
