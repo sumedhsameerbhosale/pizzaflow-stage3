@@ -1,12 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import type { MenuItem } from "@/lib/types";
+import type { MenuItem, ExtractedOrderFields } from "@/lib/types";
 
-type ChatMessage = { role: "user" | "assistant"; content: string; offline?: boolean };
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+  offline?: boolean;
+  extractedOrder?: ExtractedOrderFields;
+  applied?: boolean;
+};
 
 type Props = {
   menu: { bases: MenuItem[]; pizzas: MenuItem[]; toppings: MenuItem[] };
+  onApplyExtractedOrder: (fields: ExtractedOrderFields) => void;
 };
 
 /**
@@ -15,7 +22,7 @@ type Props = {
  * next to it keeps working, per Stage 1's own risk note that an AI
  * feature "must not block the core ordering flow."
  */
-export default function AssistantPanel({ menu }: Props) {
+export default function AssistantPanel({ menu, onApplyExtractedOrder }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
@@ -52,6 +59,10 @@ export default function AssistantPanel({ menu }: Props) {
           role: "assistant",
           content: data.reply,
           offline: data.source === "fallback",
+          extractedOrder:
+            data.extractedOrder && Object.keys(data.extractedOrder).length > 0
+              ? data.extractedOrder
+              : undefined,
         },
       ]);
     } catch {
@@ -67,6 +78,13 @@ export default function AssistantPanel({ menu }: Props) {
     } finally {
       setSending(false);
     }
+  }
+
+  function handleApply(index: number, fields: ExtractedOrderFields) {
+    onApplyExtractedOrder(fields);
+    setMessages((prev) =>
+      prev.map((m, i) => (i === index ? { ...m, applied: true } : m))
+    );
   }
 
   return (
@@ -93,6 +111,16 @@ export default function AssistantPanel({ menu }: Props) {
               </span>
             )}
             {m.content}
+            {m.extractedOrder && (
+              <button
+                type="button"
+                onClick={() => handleApply(i, m.extractedOrder!)}
+                disabled={m.applied}
+                className="mt-2 rounded-md bg-green-700 px-2 py-1 text-xs font-medium text-white hover:bg-green-800 disabled:bg-gray-300 disabled:text-gray-500"
+              >
+                {m.applied ? "Applied ✓" : "Fill order form"}
+              </button>
+            )}
           </div>
         ))}
         {sending && (

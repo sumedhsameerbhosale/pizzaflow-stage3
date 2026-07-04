@@ -10,6 +10,16 @@ export type MenuItem = {
 
 export type PaymentMode = "Cash" | "Card" | "UPI";
 
+export type ExtractedOrderFields = {
+  customerName?: string;
+  phone?: string;
+  baseId?: string;
+  pizzaId?: string;
+  toppingId?: string;
+  quantity?: number;
+  paymentMode?: PaymentMode;
+};
+
 export type OrderRecord = {
   id: string;
   customer_name: string;

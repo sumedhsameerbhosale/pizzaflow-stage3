@@ -19,7 +19,7 @@ const DEFAULT_TIMEOUT_MS = 8000;
 
 export async function callOpenRouter(
   messages: OpenRouterMessage[],
-  opts?: { timeoutMs?: number }
+  opts?: { timeoutMs?: number; jsonMode?: boolean }
 ): Promise<OpenRouterResult> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   const model = process.env.OPENROUTER_MODEL;
@@ -41,7 +41,11 @@ export async function callOpenRouter(
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ model, messages }),
+      body: JSON.stringify({
+        model,
+        messages,
+        ...(opts?.jsonMode ? { response_format: { type: "json_object" } } : {}),
+      }),
       signal: controller.signal,
     });
 

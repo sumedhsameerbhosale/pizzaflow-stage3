@@ -7,7 +7,7 @@ import {
   validateQuantity,
 } from "@/lib/validators";
 import { computeBill, type BillLine } from "@/lib/billing";
-import type { MenuItem, PaymentMode } from "@/lib/types";
+import type { MenuItem, PaymentMode, ExtractedOrderFields } from "@/lib/types";
 import AssistantPanel from "./AssistantPanel";
 
 type Props = {
@@ -128,6 +128,16 @@ export default function OrderForm({
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function applyExtractedOrder(fields: ExtractedOrderFields) {
+    if (fields.customerName !== undefined) setCustomerName(fields.customerName);
+    if (fields.phone !== undefined) setPhone(fields.phone);
+    if (fields.baseId !== undefined) setBaseId(fields.baseId);
+    if (fields.pizzaId !== undefined) setPizzaId(fields.pizzaId);
+    if (fields.toppingId !== undefined) setToppingId(fields.toppingId);
+    if (fields.quantity !== undefined) setQuantity(String(fields.quantity));
+    if (fields.paymentMode !== undefined) setPaymentMode(fields.paymentMode);
   }
 
   function startNewOrder() {
@@ -303,6 +313,7 @@ export default function OrderForm({
       <div className="lg:col-span-1">
         <AssistantPanel
           menu={{ bases, pizzas, toppings }}
+          onApplyExtractedOrder={applyExtractedOrder}
         />
       </div>
     </div>
