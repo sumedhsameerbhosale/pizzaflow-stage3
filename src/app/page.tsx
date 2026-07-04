@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getDiscountQtyThreshold } from "@/lib/settings";
 import OrderForm from "@/components/order/OrderForm";
 import Logo from "@/components/Logo";
+import LogoutButton from "@/components/LogoutButton";
 import type { MenuItem } from "@/lib/types";
 
 // proxy.ts already redirects unauthenticated visitors to /login before
@@ -39,7 +40,10 @@ export default async function Home() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
-      <header className="mb-8 flex flex-col items-center text-center">
+      <header className="relative mb-8 flex flex-col items-center text-center">
+        <div className="absolute right-0 top-0">
+          <LogoutButton />
+        </div>
         <Logo className="mb-2 h-10 w-10" />
         <h1 className="text-3xl font-bold text-gray-900">PizzaFlow</h1>
         <p className="mt-1 text-gray-600">

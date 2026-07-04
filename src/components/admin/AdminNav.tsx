@@ -1,24 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import Logo from "@/components/Logo";
+import LogoutButton from "@/components/LogoutButton";
 
 export default function AdminNav({
   active,
 }: {
   active: "orders" | "insights" | "settings";
 }) {
-  const router = useRouter();
-
-  async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
-  }
-
   const linkClass = (name: "orders" | "insights" | "settings") =>
     `rounded-md px-3 py-1.5 text-sm font-medium ${
       active === name
@@ -41,12 +31,7 @@ export default function AdminNav({
           Settings
         </Link>
       </div>
-      <button
-        onClick={handleLogout}
-        className="rounded-md border px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-      >
-        Log out
-      </button>
+      <LogoutButton />
     </nav>
   );
 }
