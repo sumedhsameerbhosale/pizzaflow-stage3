@@ -133,6 +133,58 @@ export function validateDiscountThreshold(raw: string): ValidationResult<number>
 }
 
 /**
+ * For admin-created/edited menu_items.name. No existing validator fits --
+ * validateName (customer name) is letters+spaces only and would reject
+ * real menu item names like "BBQ Chicken (Large)" or "7-inch Thin Crust".
+ * Deliberately permissive: any non-empty, reasonably-short printable
+ * string. The DB has no format constraint on menu_items.name (only
+ * `not null`), so this is purely a sanity check, not a business rule.
+ */
+export function validateMenuItemName(raw: string): ValidationResult<string> {
+  const candidate = raw.trim();
+  if (!candidate) {
+    return { ok: false, error: "Name cannot be empty. Please enter an item name." };
+  }
+  if (candidate.length > 80) {
+    return {
+      ok: false,
+      error: `Name is too long (${candidate.length} characters). Please use 80 characters or fewer.`,
+    };
+  }
+  return { ok: true, value: candidate };
+}
+
+/**
+ * For admin-created/edited menu_items.price. Mirrors the DB constraint
+ * `numeric(10,2) check (price > 0)` -- positive, at most 2 decimal
+ * places, and capped well under numeric(10,2)'s range to catch obvious
+ * fat-finger entry (e.g. an extra zero) before it reaches Postgres.
+ */
+export function validateMenuItemPrice(raw: string): ValidationResult<number> {
+  const candidate = raw.trim();
+  if (!candidate) {
+    return { ok: false, error: "Price cannot be empty. Please enter a price greater than 0." };
+  }
+  if (!/^\d+(\.\d{1,2})?$/.test(candidate)) {
+    return {
+      ok: false,
+      error: `Invalid price: "${candidate}" must be a number with at most 2 decimal places (e.g. 149.99).`,
+    };
+  }
+  const value = Number(candidate);
+  if (value <= 0) {
+    return { ok: false, error: "Invalid price: must be greater than 0." };
+  }
+  if (value > 100000) {
+    return {
+      ok: false,
+      error: "Invalid price: must be 100000 or less. Please double-check the amount.",
+    };
+  }
+  return { ok: true, value };
+}
+
+/**
  * Stage 2's `validate_menu_choice` ("enter item number 1-N") doesn't
  * port 1:1 -- the web UI binds selections to real menu_items.id values
  * via <select>/buttons, so there's no numeric index to range-check on

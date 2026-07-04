@@ -12,7 +12,11 @@ Stage 1 discovery document.
   writes go through `POST /api/orders` -- never a direct browser-to-
   Supabase insert -- because it re-validates every field server-side and
   re-fetches menu prices fresh from the DB, so a tampered client payload
-  can never be persisted.
+  can never be persisted. The route calls a single Postgres function,
+  `place_order()` (see `supabase/schema.sql`), which inserts the `orders`
+  row and its `order_items` rows in one atomic transaction -- a failure
+  partway through rolls back the whole thing, so an order can never end
+  up saved with missing line items.
 - **Database**: Supabase Postgres. The 3 tables the brief requires
   (`menu_items`, `orders`, `order_items` -- see `supabase/schema.sql`),
   plus a 4th, `app_settings`, added for the live-editable discount
@@ -21,8 +25,10 @@ Stage 1 discovery document.
   flow needs the live menu and threshold to price a bill), `orders`/
   `order_items` INSERT is open to any `authenticated` user (staff place
   orders too), while SELECT on those tables and UPDATE on `app_settings`
-  require the `admin` role (see Roles below). No service-role key is
-  used anywhere at runtime.
+  require the `admin` role (see Roles below). `menu_items` also allows
+  admin-only INSERT/UPDATE, for the `/admin/menu` catalog manager --
+  no DELETE policy, items are soft-deactivated via `is_active` instead.
+  No service-role key is used anywhere at runtime.
 - **Auth**: Supabase Auth (email/password), via `@supabase/ssr`. One
   shared login (`/login`) gates both the order-taking page (`/`) and
   the admin views (`/admin/*`). `src/proxy.ts` (Next.js 16 renamed
@@ -81,6 +87,8 @@ the expected category.
    - If you already ran these against an existing project before the `app_settings` table was added, run `supabase/add_settings.sql` instead (idempotent, safe to run once against an already-seeded project without duplicating menu/order data).
    - If you already ran these against an existing project before the order page (`/`) was auth-gated, also run `supabase/tighten_order_insert.sql` to move `orders`/`order_items` INSERT from `anon, authenticated` to `authenticated` only (idempotent).
    - If you already ran these against an existing project before staff/admin roles were added, also run `supabase/add_roles.sql` (idempotent) -- see Roles above.
+   - If you already ran these against an existing project before menu management (`/admin/menu`) was added, also run `supabase/add_menu_admin_write.sql` (idempotent).
+   - If you already ran these against an existing project before order placement moved to the atomic `place_order()` function, also run `supabase/add_place_order_rpc.sql` (idempotent).
 4. In Supabase Dashboard → Authentication → Users, manually create at least one user (email + password), then promote it to `admin` (see Roles above). Any other users default to `staff`.
 5. `npm run dev`, open `http://localhost:3000`.
 

@@ -124,63 +124,43 @@ export async function POST(request: Request) {
   ];
   const bill = computeBill(lines, quantityResult.value, discountQtyThreshold);
 
-  // Generate the id ourselves and skip .select() after insert: the anon
-  // role can INSERT into orders but deliberately cannot SELECT it (that
-  // restriction is what gates the admin view) -- asking PostgREST to
-  // return the inserted row would require a SELECT-back and fail RLS
-  // even though the insert itself is allowed.
+  // Generate the id ourselves: the caller can call place_order (which
+  // inserts into orders) but deliberately cannot SELECT orders back
+  // (that restriction is what gates the admin view) -- returning void
+  // from place_order and building the confirmation JSON from the
+  // in-memory `bill`/`lines` below avoids needing a SELECT-back that
+  // would fail RLS even though the writes themselves are allowed.
   const orderId = randomUUID();
   const createdAt = new Date().toISOString();
 
-  const { error: orderError } = await supabase.from("orders").insert({
-    id: orderId,
-    customer_name: nameResult.value,
-    phone: phoneResult.value,
-    quantity: bill.quantity,
-    unit_total: bill.unitTotal,
-    subtotal: bill.subtotal,
-    discount_rate: bill.discountRate,
-    discount_amount: bill.discountAmount,
-    post_discount_total: bill.postDiscountTotal,
-    gst_amount: bill.gstAmount,
-    grand_total: bill.grandTotal,
-    payment_mode: paymentResult.value,
+  // Single atomic RPC: both the orders row and its 3 order_items rows
+  // are inserted inside one Postgres function call (see
+  // supabase/add_place_order_rpc.sql), so a failure partway through
+  // rolls back the whole thing -- no more "order saved but items
+  // failed" partial-failure state.
+  const { error: placeOrderError } = await supabase.rpc("place_order", {
+    p_order_id: orderId,
+    p_customer_name: nameResult.value,
+    p_phone: phoneResult.value,
+    p_quantity: bill.quantity,
+    p_unit_total: bill.unitTotal,
+    p_subtotal: bill.subtotal,
+    p_discount_rate: bill.discountRate,
+    p_discount_amount: bill.discountAmount,
+    p_post_discount_total: bill.postDiscountTotal,
+    p_gst_amount: bill.gstAmount,
+    p_grand_total: bill.grandTotal,
+    p_payment_mode: paymentResult.value,
+    p_order_items: [
+      { menu_item_id: base.id, category: "base", item_name: base.name, unit_price: base.price },
+      { menu_item_id: pizza.id, category: "pizza", item_name: pizza.name, unit_price: pizza.price },
+      { menu_item_id: topping.id, category: "topping", item_name: topping.name, unit_price: topping.price },
+    ],
   });
 
-  if (orderError) {
+  if (placeOrderError) {
     return NextResponse.json(
       { ok: false, error: "Could not save the order. Please try again." },
-      { status: 500 }
-    );
-  }
-
-  const { error: itemsError } = await supabase.from("order_items").insert([
-    {
-      order_id: orderId,
-      menu_item_id: base.id,
-      category: "base",
-      item_name: base.name,
-      unit_price: base.price,
-    },
-    {
-      order_id: orderId,
-      menu_item_id: pizza.id,
-      category: "pizza",
-      item_name: pizza.name,
-      unit_price: pizza.price,
-    },
-    {
-      order_id: orderId,
-      menu_item_id: topping.id,
-      category: "topping",
-      item_name: topping.name,
-      unit_price: topping.price,
-    },
-  ]);
-
-  if (itemsError) {
-    return NextResponse.json(
-      { ok: false, error: "Order was saved but line items failed. Please contact staff." },
       { status: 500 }
     );
   }

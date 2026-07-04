@@ -79,15 +79,25 @@ alter table orders enable row level security;
 alter table order_items enable row level security;
 alter table app_settings enable row level security;
 
--- menu_items: public read only.
--- The order page (`/`) itself requires an authenticated session (see
--- src/proxy.ts), but a public read policy is still harmless and kept
--- simple here -- no public writes either way, menu changes are a
--- DB-console operation only.
+-- menu_items: public read for everyone; admin-only insert/update for
+-- managing the catalog from /admin/menu (see add_menu_admin_write.sql).
+-- No delete policy -- items are soft-deactivated via is_active, never
+-- hard-deleted.
 create policy "menu_items_public_read"
   on menu_items for select
   to anon, authenticated
   using (true);
+
+create policy "menu_items_admin_insert"
+  on menu_items for insert
+  to authenticated
+  with check ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
+
+create policy "menu_items_admin_update"
+  on menu_items for update
+  to authenticated
+  using ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin')
+  with check ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
 -- orders: INSERT open to any authenticated user (staff place orders
 -- too, via `/`, gated by src/proxy.ts). SELECT requires the "admin"
@@ -131,9 +141,67 @@ create policy "app_settings_admin_update"
   with check ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
 -- No UPDATE/DELETE policies are defined for anon or authenticated on
--- menu_items/orders/order_items -- RLS denies by default when no policy
--- matches, so those are effectively append-only from the app's
--- perspective (mirrors Stage 2's log-only, no-edit behavior). All order
--- writes go through the anon INSERT policy via the server-side
--- /api/orders route handler -- no service-role key is needed anywhere
--- at runtime.
+-- orders/order_items -- RLS denies by default when no policy matches,
+-- so those two tables are effectively append-only from the app's
+-- perspective (mirrors Stage 2's log-only, no-edit behavior). menu_items
+-- is the one exception, with admin-only insert/update above. All order
+-- writes go through the place_order() function below, called via the
+-- server-side /api/orders route handler -- no service-role key is
+-- needed anywhere at runtime.
+
+-- ============================================================
+-- place_order(): inserts an orders row and its order_items rows in one
+-- atomic transaction (a failure partway through rolls back the whole
+-- call, so an order can never end up with missing line items).
+-- security invoker (the default, stated explicitly for clarity) so it
+-- runs with the CALLER's privileges -- the RLS policies above
+-- (orders_authenticated_insert, order_items_authenticated_insert) are
+-- still the real authorization boundary, not bypassed.
+-- ============================================================
+
+create or replace function place_order(
+  p_order_id uuid,
+  p_customer_name text,
+  p_phone text,
+  p_quantity integer,
+  p_unit_total numeric(10,2),
+  p_subtotal numeric(10,2),
+  p_discount_rate numeric(4,2),
+  p_discount_amount numeric(10,2),
+  p_post_discount_total numeric(10,2),
+  p_gst_amount numeric(10,2),
+  p_grand_total numeric(10,2),
+  p_payment_mode text,
+  p_order_items jsonb
+)
+returns void
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  insert into orders (
+    id, customer_name, phone, quantity, unit_total, subtotal,
+    discount_rate, discount_amount, post_discount_total, gst_amount,
+    grand_total, payment_mode
+  ) values (
+    p_order_id, p_customer_name, p_phone, p_quantity, p_unit_total, p_subtotal,
+    p_discount_rate, p_discount_amount, p_post_discount_total, p_gst_amount,
+    p_grand_total, p_payment_mode
+  );
+
+  insert into order_items (order_id, menu_item_id, category, item_name, unit_price)
+  select
+    p_order_id,
+    (item->>'menu_item_id')::uuid,
+    item->>'category',
+    item->>'item_name',
+    (item->>'unit_price')::numeric(10,2)
+  from jsonb_array_elements(p_order_items) as item;
+end;
+$$;
+
+grant execute on function place_order(
+  uuid, text, text, integer, numeric, numeric, numeric, numeric, numeric,
+  numeric, numeric, text, jsonb
+) to authenticated;
