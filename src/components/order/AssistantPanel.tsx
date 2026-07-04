@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { Send, WifiOff, Check } from "lucide-react";
 import type { MenuItem, ExtractedOrderFields } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -88,10 +93,10 @@ export default function AssistantPanel({ menu, onApplyExtractedOrder }: Props) {
   }
 
   return (
-    <div className="flex h-full flex-col rounded-lg border bg-white">
+    <Card className="flex h-full flex-col overflow-hidden py-0">
       <div className="border-b p-3">
-        <h2 className="font-semibold text-gray-800">Smart Order Assistant</h2>
-        <p className="text-xs text-gray-500">Optional -- advisory only</p>
+        <h2 className="font-semibold text-foreground">Smart Order Assistant</h2>
+        <p className="text-xs text-muted-foreground">Optional -- advisory only</p>
       </div>
       <div className="flex-1 space-y-3 overflow-y-auto p-3" style={{ maxHeight: 320 }}>
         {messages.map((m, i) => (
@@ -99,52 +104,52 @@ export default function AssistantPanel({ menu, onApplyExtractedOrder }: Props) {
             key={i}
             className={`rounded-md p-2 text-sm ${
               m.role === "user"
-                ? "ml-6 bg-blue-50 text-blue-900"
+                ? "ml-6 bg-primary/10 text-foreground"
                 : m.offline
                   ? "mr-6 bg-yellow-50 text-yellow-800"
-                  : "mr-6 bg-gray-50 text-gray-800"
+                  : "mr-6 bg-muted text-foreground"
             }`}
           >
             {m.offline && (
-              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-yellow-600">
+              <Badge variant="outline" className="mb-1 gap-1 border-yellow-300 text-yellow-700">
+                <WifiOff className="size-3" />
                 Offline mode
-              </span>
+              </Badge>
             )}
-            {m.content}
+            <p>{m.content}</p>
             {m.extractedOrder && (
-              <button
+              <Button
                 type="button"
+                size="sm"
                 onClick={() => handleApply(i, m.extractedOrder!)}
                 disabled={m.applied}
-                className="mt-2 rounded-md bg-green-700 px-2 py-1 text-xs font-medium text-white hover:bg-green-800 disabled:bg-gray-300 disabled:text-gray-500"
+                className="mt-2 bg-green-700 text-white hover:bg-green-800 disabled:bg-muted disabled:text-muted-foreground"
               >
-                {m.applied ? "Applied ✓" : "Fill order form"}
-              </button>
+                {m.applied ? <Check /> : null}
+                {m.applied ? "Applied" : "Fill order form"}
+              </Button>
             )}
           </div>
         ))}
         {sending && (
-          <div className="mr-6 rounded-md bg-gray-50 p-2 text-sm text-gray-400">
+          <div className="mr-6 rounded-md bg-muted p-2 text-sm text-muted-foreground">
             Thinking...
           </div>
         )}
       </div>
       <form onSubmit={sendMessage} className="flex gap-2 border-t p-3">
-        <input
+        <Input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask about the menu..."
-          className="flex-1 rounded-md border px-2 py-1 text-sm"
+          className="flex-1"
         />
-        <button
-          type="submit"
-          disabled={sending}
-          className="rounded-md bg-gray-800 px-3 py-1 text-sm text-white hover:bg-gray-900 disabled:opacity-50"
-        >
+        <Button type="submit" disabled={sending} variant="secondary">
+          <Send />
           Send
-        </button>
+        </Button>
       </form>
-    </div>
+    </Card>
   );
 }

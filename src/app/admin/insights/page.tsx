@@ -17,9 +17,9 @@ export default async function AdminInsightsPage() {
   return (
     <>
       <AdminNav active="insights" />
-      <h1 className="mb-4 text-xl font-bold text-gray-900">Sales &amp; Ops Insights</h1>
+      <h1 className="mb-4 text-xl font-bold text-foreground">Sales &amp; Ops Insights</h1>
       {error ? (
-        <p className="text-red-600">Could not load orders: {error.message}</p>
+        <p className="text-destructive">Could not load orders: {error.message}</p>
       ) : (
         <InsightsCard stats={stats} narration={narration.ok ? narration.text : null} />
       )}

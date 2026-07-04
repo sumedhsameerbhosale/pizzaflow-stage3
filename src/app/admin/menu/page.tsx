@@ -14,9 +14,9 @@ export default async function AdminMenuPage() {
   return (
     <>
       <AdminNav active="menu" />
-      <h1 className="mb-4 text-xl font-bold text-gray-900">Menu</h1>
+      <h1 className="mb-4 text-xl font-bold text-foreground">Menu</h1>
       {error || !menuItems ? (
-        <p className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <p className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">
           Could not load menu items. Please refresh and try again.
         </p>
       ) : (

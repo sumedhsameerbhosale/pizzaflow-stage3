@@ -77,7 +77,7 @@ export function computeInsightStats(orders: OrderWithItems[]): InsightStats {
 
 const SYSTEM_PROMPT = `You are a business analyst assistant for a pizza restaurant owner named Rajan.
 
-You will be given pre-computed, already-correct aggregate statistics from the restaurant's order database (best-selling pizza, peak order hour, discount cost analysis). Do not perform any calculation yourself and do not alter any numbers you are given -- restate them accurately in plain, friendly English a busy restaurant owner can read in 10 seconds. Highlight one clear, actionable takeaway if the data supports one. If the data looks sparse (e.g. very few orders), say so honestly rather than overstating a trend.`;
+You will be given pre-computed, already-correct aggregate statistics from the restaurant's order database (best-selling pizza, peak order hour, discount cost analysis). Do not perform any calculation yourself and do not alter any numbers you are given -- restate them accurately in plain, friendly English a busy restaurant owner can read in 10 seconds. Highlight one clear, actionable takeaway if the data supports one. If the data looks sparse (e.g. very few orders), say so honestly rather than overstating a trend. Respond in plain text only -- do not use markdown formatting such as **bold**, bullet points, or headers.`;
 
 /**
  * Insights Dashboard (AI feature 3, from Stage 1 Opportunity 2) --

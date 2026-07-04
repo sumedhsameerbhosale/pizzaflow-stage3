@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { TriangleAlert } from "lucide-react";
 import type { AnomalyFlag } from "@/lib/anomaly";
+import { badgeVariants } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 type Props = {
   orderId: string;
@@ -67,13 +70,14 @@ export default function AnomalyBadge({
     <div className="relative inline-block">
       <button
         onClick={handleClick}
-        className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 hover:bg-red-200"
         title="Click for details"
+        className={cn(badgeVariants({ variant: "destructive" }), "cursor-pointer")}
       >
-        {flags.length} anomaly{flags.length > 1 ? "ies" : ""}
+        <TriangleAlert />
+        {flags.length} anomal{flags.length > 1 ? "ies" : "y"}
       </button>
       {open && (
-        <div className="absolute z-10 mt-1 w-72 rounded-md border bg-white p-3 text-xs text-gray-700 shadow-lg">
+        <div className="absolute z-10 mt-1 w-72 rounded-md border bg-card p-3 text-xs text-card-foreground shadow-lg">
           {loading ? (
             "Loading explanation..."
           ) : (

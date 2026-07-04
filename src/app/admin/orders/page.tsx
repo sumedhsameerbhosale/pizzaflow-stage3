@@ -20,9 +20,9 @@ export default async function AdminOrdersPage() {
   return (
     <>
       <AdminNav active="orders" />
-      <h1 className="mb-4 text-xl font-bold text-gray-900">All Orders</h1>
+      <h1 className="mb-4 text-xl font-bold text-foreground">All Orders</h1>
       {error ? (
-        <p className="text-red-600">Could not load orders: {error.message}</p>
+        <p className="text-destructive">Could not load orders: {error.message}</p>
       ) : (
         <OrdersTable
           orders={(orders ?? []) as OrderWithItems[]}

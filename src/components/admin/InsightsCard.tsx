@@ -1,4 +1,7 @@
+import { Sparkles } from "lucide-react";
 import type { InsightStats } from "@/lib/insights";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 function formatMoney(n: number) {
   return `Rs. ${n.toFixed(2)}`;
@@ -31,17 +34,14 @@ export default function InsightsCard({
         />
       </div>
 
-      <div className="rounded-lg border bg-gray-50 p-4">
-        <h3 className="mb-1 text-sm font-semibold text-gray-700">AI Summary</h3>
-        {narration ? (
-          <p className="text-sm text-gray-800">{narration}</p>
-        ) : (
-          <p className="text-sm text-gray-500">
-            AI narration unavailable right now -- the numbers above are
-            computed directly from the database and are unaffected.
-          </p>
-        )}
-      </div>
+      <Alert>
+        <Sparkles />
+        <AlertTitle>AI Summary</AlertTitle>
+        <AlertDescription>
+          {narration ??
+            "AI narration unavailable right now -- the numbers above are computed directly from the database and are unaffected."}
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }
@@ -56,12 +56,16 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="rounded-lg border p-4">
-      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-        {label}
-      </div>
-      <div className="mt-1 text-lg font-bold text-gray-900">{value}</div>
-      {sub && <div className="text-xs text-gray-500">{sub}</div>}
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="text-lg font-bold text-foreground">{value}</div>
+        {sub && <div className="text-xs text-muted-foreground">{sub}</div>}
+      </CardContent>
+    </Card>
   );
 }

@@ -10,7 +10,7 @@ export default async function AdminSettingsPage() {
   return (
     <>
       <AdminNav active="settings" />
-      <h1 className="mb-4 text-xl font-bold text-gray-900">Settings</h1>
+      <h1 className="mb-4 text-xl font-bold text-foreground">Settings</h1>
       <SettingsForm initialThreshold={discountQtyThreshold} />
     </>
   );

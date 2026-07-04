@@ -1,7 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { Settings2 } from "lucide-react";
 import { validateDiscountThreshold } from "@/lib/validators";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function SettingsForm({
   initialThreshold,
@@ -48,41 +60,75 @@ export default function SettingsForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-sm space-y-4 rounded-lg border p-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Bulk discount quantity threshold
-        </label>
-        <p className="mt-1 text-xs text-gray-500">
-          Orders with this quantity of pizzas or more automatically get a 10%
-          discount. Takes effect immediately for new orders -- no deploy
-          needed.
-        </p>
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="mt-2 w-24 rounded-md border px-3 py-2"
-        />
-        {fieldError && <p className="mt-1 text-sm text-red-600">{fieldError}</p>}
-      </div>
+    <div className="grid gap-6 lg:grid-cols-3">
+      <Card className="lg:col-span-1">
+        <CardHeader>
+          <CardTitle>Bulk discount threshold</CardTitle>
+          <CardDescription>
+            Takes effect immediately for new orders -- no deploy needed.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="discount-threshold">Quantity threshold</Label>
+              <Input
+                id="discount-threshold"
+                type="text"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className="w-24"
+              />
+              {fieldError && <p className="text-sm text-destructive">{fieldError}</p>}
+            </div>
 
-      {saveError && (
-        <p className="rounded-md bg-red-50 p-2 text-sm text-red-700">{saveError}</p>
-      )}
-      {savedThreshold !== null && (
-        <p className="rounded-md bg-green-50 p-2 text-sm text-green-700">
-          Saved -- discount now applies at quantity {savedThreshold} or more.
-        </p>
-      )}
+            {saveError && (
+              <Alert variant="destructive">
+                <AlertDescription>{saveError}</AlertDescription>
+              </Alert>
+            )}
+            {savedThreshold !== null && (
+              <Alert>
+                <AlertDescription>
+                  Saved -- discount now applies at quantity {savedThreshold} or more.
+                </AlertDescription>
+              </Alert>
+            )}
 
-      <button
-        type="submit"
-        disabled={saving}
-        className="w-full rounded-md bg-accent px-4 py-2 font-medium text-white hover:bg-accent-hover disabled:opacity-50"
-      >
-        {saving ? "Saving..." : "Save"}
-      </button>
-    </form>
+            <Button type="submit" disabled={saving} className="w-full">
+              {saving ? "Saving..." : "Save"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card className="lg:col-span-2">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings2 className="size-4" />
+            About this setting
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <p>
+            PizzaFlow automatically applies a 10% discount to any order whose
+            quantity meets or exceeds this threshold. It&apos;s the same rule
+            counter staff see on the order form (&quot;A 10% discount applies
+            automatically for {value || initialThreshold} or more
+            pizzas.&quot;), sourced from this single live value.
+          </p>
+          <p>
+            Changing it here takes effect immediately for every new order --
+            no code change or deploy required. Past orders are never
+            recalculated, so adjusting the threshold has no effect on
+            historical order history or reporting.
+          </p>
+          <p>
+            Valid range is 1-10, matching the maximum quantity a single order
+            can have.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

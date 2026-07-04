@@ -9,6 +9,12 @@ import {
 import { computeBill, type BillLine } from "@/lib/billing";
 import type { MenuItem, PaymentMode, ExtractedOrderFields } from "@/lib/types";
 import AssistantPanel from "./AssistantPanel";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Props = {
   bases: MenuItem[];
@@ -152,95 +158,95 @@ export default function OrderForm({
 
   if (confirmation) {
     return (
-      <div className="mx-auto max-w-xl rounded-lg border border-green-200 bg-green-50 p-6">
-        <h2 className="text-xl font-bold text-green-800">Order confirmed!</h2>
-        <p className="mt-1 text-sm text-green-700">
-          Order #{confirmation.id.slice(0, 8)} for {confirmation.customerName}
-        </p>
-        <div className="mt-4 space-y-1 rounded-md bg-white p-4 text-sm">
-          {confirmation.items.map((item) => (
-            <div key={item.category} className="flex justify-between">
-              <span className="capitalize text-gray-600">
-                {item.category}: {item.name}
-              </span>
-              <span>{formatMoney(item.unitPrice)}</span>
+      <Card className="mx-auto max-w-xl border-green-200 bg-green-50">
+        <CardHeader>
+          <CardTitle className="text-xl text-green-800">Order confirmed!</CardTitle>
+          <p className="text-sm text-green-700">
+            Order #{confirmation.id.slice(0, 8)} for {confirmation.customerName}
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-1 rounded-md bg-white p-4 text-sm">
+            {confirmation.items.map((item) => (
+              <div key={item.category} className="flex justify-between">
+                <span className="capitalize text-muted-foreground">
+                  {item.category}: {item.name}
+                </span>
+                <span>{formatMoney(item.unitPrice)}</span>
+              </div>
+            ))}
+            <div className="flex justify-between border-t pt-1 text-muted-foreground">
+              <span>Quantity</span>
+              <span>x {confirmation.quantity}</span>
             </div>
-          ))}
-          <div className="flex justify-between border-t pt-1 text-gray-600">
-            <span>Quantity</span>
-            <span>x {confirmation.quantity}</span>
+            <div className="flex justify-between text-muted-foreground">
+              <span>Subtotal</span>
+              <span>{formatMoney(confirmation.subtotal)}</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>Discount ({(confirmation.discountRate * 100).toFixed(0)}%)</span>
+              <span>-{formatMoney(confirmation.discountAmount)}</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>GST (18%)</span>
+              <span>{formatMoney(confirmation.gstAmount)}</span>
+            </div>
+            <div className="flex justify-between border-t pt-1 text-base font-bold">
+              <span>Total Paid</span>
+              <span>{formatMoney(confirmation.grandTotal)}</span>
+            </div>
+            <div className="pt-1 text-muted-foreground">
+              Payment: {confirmation.paymentMode}
+            </div>
           </div>
-          <div className="flex justify-between text-gray-600">
-            <span>Subtotal</span>
-            <span>{formatMoney(confirmation.subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-gray-600">
-            <span>Discount ({(confirmation.discountRate * 100).toFixed(0)}%)</span>
-            <span>-{formatMoney(confirmation.discountAmount)}</span>
-          </div>
-          <div className="flex justify-between text-gray-600">
-            <span>GST (18%)</span>
-            <span>{formatMoney(confirmation.gstAmount)}</span>
-          </div>
-          <div className="flex justify-between border-t pt-1 text-base font-bold">
-            <span>Total Paid</span>
-            <span>{formatMoney(confirmation.grandTotal)}</span>
-          </div>
-          <div className="pt-1 text-gray-600">
-            Payment: {confirmation.paymentMode}
-          </div>
-        </div>
-        <button
-          onClick={startNewOrder}
-          className="mt-4 w-full rounded-md bg-green-700 px-4 py-2 font-medium text-white hover:bg-green-800"
-        >
-          Start another order
-        </button>
-      </div>
+          <Button
+            onClick={startNewOrder}
+            className="mt-4 w-full bg-green-700 text-white hover:bg-green-800"
+          >
+            Start another order
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
       <form onSubmit={handleSubmit} className="space-y-6 lg:col-span-2">
-        <fieldset className="space-y-4 rounded-lg border p-4">
-          <legend className="px-1 text-sm font-semibold text-gray-700">
+        <fieldset className="space-y-4 rounded-xl border border-input bg-card p-4 ring-1 ring-foreground/10">
+          <legend className="px-1 text-sm font-semibold text-foreground">
             Customer details
           </legend>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Name
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label htmlFor="customerName">Name</Label>
+            <Input
+              id="customerName"
               type="text"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
-              className="mt-1 w-full rounded-md border px-3 py-2"
               placeholder="e.g. Rahul Sharma"
             />
             {fieldErrors.customerName && (
-              <p className="mt-1 text-sm text-red-600">{fieldErrors.customerName}</p>
+              <p className="text-sm text-destructive">{fieldErrors.customerName}</p>
             )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Phone number
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone number</Label>
+            <Input
+              id="phone"
               type="text"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="mt-1 w-full rounded-md border px-3 py-2"
               placeholder="10-digit mobile number"
             />
             {fieldErrors.phone && (
-              <p className="mt-1 text-sm text-red-600">{fieldErrors.phone}</p>
+              <p className="text-sm text-destructive">{fieldErrors.phone}</p>
             )}
           </div>
         </fieldset>
 
-        <fieldset className="space-y-4 rounded-lg border p-4">
-          <legend className="px-1 text-sm font-semibold text-gray-700">
+        <fieldset className="space-y-4 rounded-xl border border-input bg-card p-4 ring-1 ring-foreground/10">
+          <legend className="px-1 text-sm font-semibold text-foreground">
             Build your pizza
           </legend>
           <MenuSelect label="Base" items={bases} value={baseId} onChange={setBaseId} />
@@ -251,63 +257,56 @@ export default function OrderForm({
             value={toppingId}
             onChange={setToppingId}
           />
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Quantity (1-10)
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label htmlFor="quantity">Quantity (1-10)</Label>
+            <Input
+              id="quantity"
               type="text"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              className="mt-1 w-32 rounded-md border px-3 py-2"
+              className="w-32"
             />
             {fieldErrors.quantity && (
-              <p className="mt-1 text-sm text-red-600">{fieldErrors.quantity}</p>
+              <p className="text-sm text-destructive">{fieldErrors.quantity}</p>
             )}
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               A 10% discount applies automatically for {discountQtyThreshold} or more pizzas.
             </p>
           </div>
         </fieldset>
 
-        <fieldset className="space-y-2 rounded-lg border p-4">
-          <legend className="px-1 text-sm font-semibold text-gray-700">
+        <fieldset className="space-y-2 rounded-xl border border-input bg-card p-4 ring-1 ring-foreground/10">
+          <legend className="px-1 text-sm font-semibold text-foreground">
             Payment mode
           </legend>
-          <div className="flex gap-4">
+          <RadioGroup
+            value={paymentMode}
+            onValueChange={(v) => setPaymentMode(v as PaymentMode)}
+            className="flex flex-row gap-6"
+          >
             {PAYMENT_MODES.map((mode) => (
-              <label key={mode} className="flex items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="paymentMode"
-                  value={mode}
-                  checked={paymentMode === mode}
-                  onChange={() => setPaymentMode(mode)}
-                />
-                {mode}
-              </label>
+              <div key={mode} className="flex items-center gap-2">
+                <RadioGroupItem value={mode} id={`payment-${mode}`} />
+                <Label htmlFor={`payment-${mode}`}>{mode}</Label>
+              </div>
             ))}
-          </div>
+          </RadioGroup>
           {fieldErrors.paymentMode && (
-            <p className="text-sm text-red-600">{fieldErrors.paymentMode}</p>
+            <p className="text-sm text-destructive">{fieldErrors.paymentMode}</p>
           )}
         </fieldset>
 
         {livePreview && <BillPreview bill={livePreview} />}
 
         {submitError && (
-          <p className="rounded-md bg-red-50 p-3 text-sm text-red-700">
-            {submitError}
-          </p>
+          <Alert variant="destructive">
+            <AlertDescription>{submitError}</AlertDescription>
+          </Alert>
         )}
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-md bg-accent px-4 py-3 font-medium text-white hover:bg-accent-hover disabled:opacity-50"
-        >
+        <Button type="submit" disabled={submitting} size="lg" className="w-full">
           {submitting ? "Placing order..." : "Place Order"}
-        </button>
+        </Button>
       </form>
 
       <div className="lg:col-span-1">
@@ -332,12 +331,13 @@ function MenuSelect({
   onChange: (id: string) => void;
 }) {
   return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
+    <div className="space-y-2">
+      <Label htmlFor={`select-${label}`}>{label}</Label>
       <select
+        id={`select-${label}`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-md border px-3 py-2"
+        className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm"
       >
         {items.map((item) => (
           <option key={item.id} value={item.id}>
@@ -351,40 +351,44 @@ function MenuSelect({
 
 function BillPreview({ bill }: { bill: ReturnType<typeof computeBill> }) {
   return (
-    <div className="rounded-lg border bg-gray-50 p-4 text-sm">
-      <h3 className="mb-2 font-semibold text-gray-800">Bill preview</h3>
-      {bill.lines.map((line) => (
-        <div key={line.label} className="flex justify-between text-gray-600">
-          <span>
-            {line.label}: {line.itemName}
-          </span>
-          <span>{formatMoney(line.unitPrice)}</span>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm">Bill preview</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-1 text-sm">
+        {bill.lines.map((line) => (
+          <div key={line.label} className="flex justify-between text-muted-foreground">
+            <span>
+              {line.label}: {line.itemName}
+            </span>
+            <span>{formatMoney(line.unitPrice)}</span>
+          </div>
+        ))}
+        <div className="flex justify-between border-t pt-1 text-muted-foreground">
+          <span>Price per pizza</span>
+          <span>{formatMoney(bill.unitTotal)}</span>
         </div>
-      ))}
-      <div className="mt-1 flex justify-between border-t pt-1 text-gray-600">
-        <span>Price per pizza</span>
-        <span>{formatMoney(bill.unitTotal)}</span>
-      </div>
-      <div className="flex justify-between text-gray-600">
-        <span>Quantity</span>
-        <span>x {bill.quantity}</span>
-      </div>
-      <div className="flex justify-between text-gray-600">
-        <span>Subtotal</span>
-        <span>{formatMoney(bill.subtotal)}</span>
-      </div>
-      <div className="flex justify-between text-gray-600">
-        <span>Discount ({(bill.discountRate * 100).toFixed(0)}%)</span>
-        <span>-{formatMoney(bill.discountAmount)}</span>
-      </div>
-      <div className="flex justify-between text-gray-600">
-        <span>GST (18%)</span>
-        <span>{formatMoney(bill.gstAmount)}</span>
-      </div>
-      <div className="mt-1 flex justify-between border-t pt-1 text-base font-bold text-gray-900">
-        <span>Grand Total</span>
-        <span>{formatMoney(bill.grandTotal)}</span>
-      </div>
-    </div>
+        <div className="flex justify-between text-muted-foreground">
+          <span>Quantity</span>
+          <span>x {bill.quantity}</span>
+        </div>
+        <div className="flex justify-between text-muted-foreground">
+          <span>Subtotal</span>
+          <span>{formatMoney(bill.subtotal)}</span>
+        </div>
+        <div className="flex justify-between text-muted-foreground">
+          <span>Discount ({(bill.discountRate * 100).toFixed(0)}%)</span>
+          <span>-{formatMoney(bill.discountAmount)}</span>
+        </div>
+        <div className="flex justify-between text-muted-foreground">
+          <span>GST (18%)</span>
+          <span>{formatMoney(bill.gstAmount)}</span>
+        </div>
+        <div className="flex justify-between border-t pt-1 text-base font-bold text-foreground">
+          <span>Grand Total</span>
+          <span>{formatMoney(bill.grandTotal)}</span>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

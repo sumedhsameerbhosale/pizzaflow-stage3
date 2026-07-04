@@ -1,5 +1,14 @@
+import { Inbox } from "lucide-react";
 import type { OrderWithItems } from "@/lib/types";
 import { detectAnomalies } from "@/lib/anomaly";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import AnomalyBadge from "./AnomalyBadge";
 
 function formatMoney(n: number) {
@@ -14,23 +23,28 @@ export default function OrdersTable({
   discountQtyThreshold: number;
 }) {
   if (orders.length === 0) {
-    return <p className="text-gray-500">No orders yet.</p>;
+    return (
+      <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-12 text-muted-foreground">
+        <Inbox className="size-8" />
+        <p>No orders yet.</p>
+      </div>
+    );
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border">
-      <table className="min-w-full divide-y divide-gray-200 text-sm">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-3 py-2 text-left font-semibold text-gray-700">Timestamp</th>
-            <th className="px-3 py-2 text-left font-semibold text-gray-700">Customer</th>
-            <th className="px-3 py-2 text-left font-semibold text-gray-700">Items</th>
-            <th className="px-3 py-2 text-right font-semibold text-gray-700">Total</th>
-            <th className="px-3 py-2 text-left font-semibold text-gray-700">Payment</th>
-            <th className="px-3 py-2 text-left font-semibold text-gray-700">Flags</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
+    <div className="rounded-lg border">
+      <Table className="table-fixed">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-32">Timestamp</TableHead>
+            <TableHead className="w-36">Customer</TableHead>
+            <TableHead>Items</TableHead>
+            <TableHead className="w-24 text-right">Total</TableHead>
+            <TableHead className="w-20">Payment</TableHead>
+            <TableHead className="w-28">Flags</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {orders.map((order) => {
             const flags = detectAnomalies(
               {
@@ -47,24 +61,29 @@ export default function OrdersTable({
               .map((oi) => oi.item_name)
               .join(", ");
             return (
-              <tr key={order.id}>
-                <td className="whitespace-nowrap px-3 py-2 text-gray-600">
-                  {new Date(order.created_at).toLocaleString()}
-                </td>
-                <td className="whitespace-nowrap px-3 py-2">
-                  <div className="font-medium text-gray-900">{order.customer_name}</div>
-                  <div className="text-xs text-gray-500">{order.phone}</div>
-                </td>
-                <td className="px-3 py-2 text-gray-600">
+              <TableRow key={order.id}>
+                <TableCell className="whitespace-normal text-xs text-muted-foreground">
+                  {new Date(order.created_at).toLocaleDateString()}
+                  <br />
+                  {new Date(order.created_at).toLocaleTimeString()}
+                </TableCell>
+                <TableCell className="whitespace-normal">
+                  <div className="font-medium text-foreground">{order.customer_name}</div>
+                  <div className="text-xs text-muted-foreground">{order.phone}</div>
+                </TableCell>
+                <TableCell
+                  className="max-w-0 truncate text-muted-foreground"
+                  title={itemsLabel}
+                >
                   {itemsLabel} (x{order.quantity})
-                </td>
-                <td className="whitespace-nowrap px-3 py-2 text-right font-medium text-gray-900">
+                </TableCell>
+                <TableCell className="text-right font-medium text-foreground">
                   {formatMoney(order.grand_total)}
-                </td>
-                <td className="whitespace-nowrap px-3 py-2 text-gray-600">
+                </TableCell>
+                <TableCell className="text-muted-foreground">
                   {order.payment_mode}
-                </td>
-                <td className="whitespace-nowrap px-3 py-2">
+                </TableCell>
+                <TableCell>
                   <AnomalyBadge
                     orderId={order.id}
                     flags={flags}
@@ -74,12 +93,12 @@ export default function OrdersTable({
                     gstAmount={order.gst_amount}
                     grandTotal={order.grand_total}
                   />
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             );
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

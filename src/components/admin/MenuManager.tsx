@@ -1,8 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { Pencil, Eye, EyeOff, Check, X } from "lucide-react";
 import { validateMenuItemName, validateMenuItemPrice } from "@/lib/validators";
 import type { MenuCategory, MenuItem } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const CATEGORIES: MenuCategory[] = ["base", "pizza", "topping"];
 const CATEGORY_LABELS: Record<MenuCategory, string> = {
@@ -139,117 +144,127 @@ export default function MenuManager({ initialItems }: { initialItems: MenuItem[]
 
   return (
     <div className="space-y-8">
-      <form onSubmit={handleAdd} className="max-w-lg space-y-4 rounded-lg border p-6">
-        <h2 className="font-medium text-gray-900">Add item</h2>
-        <div className="flex gap-3">
-          <select
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value as MenuCategory)}
-            className="rounded-md border px-3 py-2"
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {CATEGORY_LABELS[c]}
-              </option>
-            ))}
-          </select>
-          <input
-            type="text"
-            placeholder="Name"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            className="flex-1 rounded-md border px-3 py-2"
-          />
-          <input
-            type="text"
-            placeholder="Price"
-            value={newPrice}
-            onChange={(e) => setNewPrice(e.target.value)}
-            className="w-28 rounded-md border px-3 py-2"
-          />
-        </div>
-        {nameFieldError && <p className="text-sm text-red-600">{nameFieldError}</p>}
-        {priceFieldError && <p className="text-sm text-red-600">{priceFieldError}</p>}
-        <button
-          type="submit"
-          disabled={adding}
-          className="rounded-md bg-accent px-4 py-2 font-medium text-white hover:bg-accent-hover disabled:opacity-50"
-        >
-          {adding ? "Adding..." : "Add item"}
-        </button>
-      </form>
+      <Card className="max-w-lg">
+        <CardHeader>
+          <CardTitle>Add item</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleAdd} className="space-y-4">
+            <div className="flex gap-3">
+              <select
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value as MenuCategory)}
+                className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {CATEGORY_LABELS[c]}
+                  </option>
+                ))}
+              </select>
+              <Input
+                type="text"
+                placeholder="Name"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                className="flex-1"
+              />
+              <Input
+                type="text"
+                placeholder="Price"
+                value={newPrice}
+                onChange={(e) => setNewPrice(e.target.value)}
+                className="w-28"
+              />
+            </div>
+            {nameFieldError && <p className="text-sm text-destructive">{nameFieldError}</p>}
+            {priceFieldError && <p className="text-sm text-destructive">{priceFieldError}</p>}
+            <Button type="submit" disabled={adding}>
+              {adding ? "Adding..." : "Add item"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {error && (
-        <p className="rounded-md bg-red-50 p-2 text-sm text-red-700">{error}</p>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       {CATEGORIES.map((category) => (
         <div key={category}>
-          <h2 className="mb-2 font-medium text-gray-900">{CATEGORY_LABELS[category]}</h2>
-          <ul className="divide-y rounded-lg border">
-            {items
-              .filter((item) => item.category === category)
-              .map((item) => (
-                <li key={item.id} className="flex items-center gap-3 px-4 py-3">
-                  {editingId === item.id ? (
-                    <>
-                      <input
-                        type="text"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        className="flex-1 rounded-md border px-2 py-1"
-                      />
-                      <input
-                        type="text"
-                        value={editPrice}
-                        onChange={(e) => setEditPrice(e.target.value)}
-                        className="w-24 rounded-md border px-2 py-1"
-                      />
-                      <button
-                        onClick={() => handleSaveEdit(item.id)}
-                        disabled={saving}
-                        className="rounded-md bg-accent px-3 py-1 text-sm text-white disabled:opacity-50"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="rounded-md px-3 py-1 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span className={`flex-1 ${!item.is_active ? "text-gray-400" : ""}`}>
-                        {item.name}
-                      </span>
-                      <span className={`w-24 ${!item.is_active ? "text-gray-400" : ""}`}>
-                        {formatMoney(item.price)}
-                      </span>
-                      <button
-                        onClick={() => startEdit(item)}
-                        className="rounded-md px-3 py-1 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleToggleActive(item)}
-                        className={`rounded-md px-3 py-1 text-sm ${
-                          item.is_active
-                            ? "text-red-700 hover:bg-red-50"
-                            : "text-green-700 hover:bg-green-50"
-                        }`}
-                      >
-                        {item.is_active ? "Deactivate" : "Activate"}
-                      </button>
-                    </>
-                  )}
-                </li>
-              ))}
-          </ul>
+          <h2 className="mb-2 font-medium text-foreground">{CATEGORY_LABELS[category]}</h2>
+          <Card>
+            <ul className="divide-y">
+              {items
+                .filter((item) => item.category === category)
+                .map((item) => (
+                  <li key={item.id} className="flex items-center gap-3 px-4 py-3">
+                    {editingId === item.id ? (
+                      <>
+                        <Input
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Input
+                          type="text"
+                          value={editPrice}
+                          onChange={(e) => setEditPrice(e.target.value)}
+                          className="w-24"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => handleSaveEdit(item.id)}
+                          disabled={saving}
+                        >
+                          <Check />
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setEditingId(null)}
+                        >
+                          <X />
+                          Cancel
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <span className={`flex-1 ${!item.is_active ? "text-muted-foreground" : ""}`}>
+                          {item.name}
+                        </span>
+                        <span className={`w-24 ${!item.is_active ? "text-muted-foreground" : ""}`}>
+                          {formatMoney(item.price)}
+                        </span>
+                        <Button size="sm" variant="ghost" onClick={() => startEdit(item)}>
+                          <Pencil />
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleToggleActive(item)}
+                          className={
+                            item.is_active
+                              ? "text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              : "text-green-700 hover:bg-green-50 hover:text-green-700"
+                          }
+                        >
+                          {item.is_active ? <EyeOff /> : <Eye />}
+                          {item.is_active ? "Deactivate" : "Activate"}
+                        </Button>
+                      </>
+                    )}
+                  </li>
+                ))}
+            </ul>
+          </Card>
           {editingId && editError && items.some((i) => i.id === editingId) && (
-            <p className="mt-1 text-sm text-red-600">{editError}</p>
+            <p className="mt-1 text-sm text-destructive">{editError}</p>
           )}
         </div>
       ))}
