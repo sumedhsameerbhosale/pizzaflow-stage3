@@ -88,13 +88,14 @@ create policy "menu_items_public_read"
   to anon, authenticated
   using (true);
 
--- orders: public INSERT allowed, SELECT restricted to authenticated.
--- Staff place orders without logging in, so anon must be able to INSERT.
--- Reading back all orders (customer names, phones, revenue) is the admin
--- view, which must be gated behind Supabase Auth login.
-create policy "orders_public_insert"
+-- orders: INSERT and SELECT both restricted to authenticated.
+-- The order page (`/`) is gated by src/proxy.ts behind the same
+-- Supabase Auth session used for /admin/*, so counter staff must log
+-- in before they can place an order. Reading back all orders (customer
+-- names, phones, revenue) is the admin view, gated the same way.
+create policy "orders_authenticated_insert"
   on orders for insert
-  to anon, authenticated
+  to authenticated
   with check (true);
 
 create policy "orders_authenticated_select"
@@ -103,9 +104,9 @@ create policy "orders_authenticated_select"
   using (true);
 
 -- order_items: same reasoning as orders.
-create policy "order_items_public_insert"
+create policy "order_items_authenticated_insert"
   on order_items for insert
-  to anon, authenticated
+  to authenticated
   with check (true);
 
 create policy "order_items_authenticated_select"

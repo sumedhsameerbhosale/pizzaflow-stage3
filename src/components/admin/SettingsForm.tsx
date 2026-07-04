@@ -79,7 +79,7 @@ export default function SettingsForm({
       <button
         type="submit"
         disabled={saving}
-        className="w-full rounded-md bg-blue-700 px-4 py-2 font-medium text-white hover:bg-blue-800 disabled:opacity-50"
+        className="w-full rounded-md bg-accent px-4 py-2 font-medium text-white hover:bg-accent-hover disabled:opacity-50"
       >
         {saving ? "Saving..." : "Save"}
       </button>

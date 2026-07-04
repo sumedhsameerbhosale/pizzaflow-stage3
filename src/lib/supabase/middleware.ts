@@ -3,15 +3,18 @@ import { NextResponse, type NextRequest } from "next/server";
 
 /**
  * Shared by src/proxy.ts (Next.js 16 renamed `middleware` to `proxy`).
- * Refreshes the Supabase session on every /admin/* request and gates
- * access: unauthenticated visitors to /admin/* (other than the login
- * page) are redirected to /admin/login; already-authenticated visitors
- * to /admin/login are redirected straight to /admin/orders.
+ * Refreshes the Supabase session on every gated request (`/` and
+ * `/admin/*`) and gates access: unauthenticated visitors to a gated
+ * path (other than /login itself) are redirected to
+ * /login?next=<original path>; already-authenticated visitors to
+ * /login are redirected to that `next` path (or /admin/orders if
+ * there isn't one).
  *
  * This is an *optimistic* check (per Next.js's own auth guidance) --
  * the real authorization boundary is Postgres RLS (orders/order_items
- * SELECT is `to authenticated` only), so even if this redirect were
- * ever bypassed, no data could actually be read.
+ * INSERT and SELECT are both `to authenticated` only), so even if this
+ * redirect were ever bypassed, no data could actually be read or
+ * written.
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -44,17 +47,20 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isLoginRoute = pathname === "/admin/login";
+  const isLoginRoute = pathname === "/login";
 
   if (!isLoginRoute && !user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/admin/login";
+    url.pathname = "/login";
+    url.searchParams.set("next", pathname + request.nextUrl.search);
     return NextResponse.redirect(url);
   }
 
   if (isLoginRoute && user) {
+    const next = request.nextUrl.searchParams.get("next");
     const url = request.nextUrl.clone();
-    url.pathname = "/admin/orders";
+    url.pathname = next && next.startsWith("/") ? next : "/admin/orders";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 

@@ -4,9 +4,9 @@ import AdminNav from "@/components/admin/AdminNav";
 import OrdersTable from "@/components/admin/OrdersTable";
 import type { OrderWithItems } from "@/lib/types";
 
-// proxy.ts already redirects unauthenticated visitors to /admin/login
-// before this page renders; RLS (orders/order_items SELECT `to
-// authenticated`) is the real security boundary either way.
+// proxy.ts already redirects unauthenticated visitors to /login before
+// this page renders; RLS (orders/order_items SELECT `to authenticated`)
+// is the real security boundary either way.
 export default async function AdminOrdersPage() {
   const supabase = await createClient();
   const [{ data: orders, error }, discountQtyThreshold] = await Promise.all([

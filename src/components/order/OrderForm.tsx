@@ -294,7 +294,7 @@ export default function OrderForm({
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-md bg-blue-700 px-4 py-3 font-medium text-white hover:bg-blue-800 disabled:opacity-50"
+          className="w-full rounded-md bg-accent px-4 py-3 font-medium text-white hover:bg-accent-hover disabled:opacity-50"
         >
           {submitting ? "Placing order..." : "Place Order"}
         </button>

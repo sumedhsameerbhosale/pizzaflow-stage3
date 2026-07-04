@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import Logo from "@/components/Logo";
 
-export default function AdminLoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -29,15 +31,17 @@ export default function AdminLoginPage() {
       return;
     }
 
-    router.push("/admin/orders");
+    const next = searchParams.get("next");
+    router.push(next && next.startsWith("/") ? next : "/admin/orders");
     router.refresh();
   }
 
   return (
     <main className="mx-auto flex min-h-[70vh] max-w-sm flex-col justify-center px-4">
-      <h1 className="mb-6 text-center text-2xl font-bold text-gray-900">
-        PizzaFlow Admin
-      </h1>
+      <div className="mb-6 flex flex-col items-center text-center">
+        <Logo className="mb-2 h-10 w-10" />
+        <h1 className="text-2xl font-bold text-gray-900">Sign in to PizzaFlow</h1>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border p-6">
         <div>
           <label className="block text-sm font-medium text-gray-700">Email</label>
@@ -63,11 +67,19 @@ export default function AdminLoginPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-md bg-blue-700 px-4 py-2 font-medium text-white hover:bg-blue-800 disabled:opacity-50"
+          className="w-full rounded-md bg-accent px-4 py-2 font-medium text-white hover:bg-accent-hover disabled:opacity-50"
         >
           {submitting ? "Signing in..." : "Sign in"}
         </button>
       </form>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -17,17 +17,20 @@ Stage 1 discovery document.
   (`menu_items`, `orders`, `order_items` -- see `supabase/schema.sql`),
   plus a 4th, `app_settings`, added for the live-editable discount
   threshold described below. Row Level Security is the actual security
-  boundary: `menu_items`/`app_settings` are publicly readable (counter
-  staff order without logging in, and the order flow needs the live
-  threshold to price a bill), `orders`/`order_items` allow public
-  INSERT but restrict SELECT to `authenticated` -- that single policy is
-  what gates the entire admin view. `app_settings` restricts UPDATE to
-  `authenticated` the same way. No service-role key is used anywhere at
-  runtime.
-- **Auth**: Supabase Auth (email/password), via `@supabase/ssr`.
-  `src/proxy.ts` (Next.js 16 renamed `middleware.ts` to `proxy.ts`)
-  refreshes the session and redirects unauthenticated visitors away
-  from `/admin/*`.
+  boundary: `menu_items`/`app_settings` are publicly readable (the order
+  flow needs the live menu and threshold to price a bill even before the
+  page-level auth check settles), `orders`/`order_items` restrict both
+  INSERT and SELECT to `authenticated` -- that single policy is what
+  gates the entire order-taking and admin views. `app_settings`
+  restricts UPDATE to `authenticated` the same way. No service-role key
+  is used anywhere at runtime.
+- **Auth**: Supabase Auth (email/password), via `@supabase/ssr`. One
+  shared login (`/login`) gates both the order-taking page (`/`) and
+  the admin views (`/admin/*`) -- there's no separate staff/admin role,
+  any authenticated user can do both. `src/proxy.ts` (Next.js 16 renamed
+  `middleware.ts` to `proxy.ts`) refreshes the session and redirects
+  unauthenticated visitors to `/login?next=<original path>`, sending
+  them back to where they were headed after signing in.
 - **AI**: OpenRouter, called only from server-side route handlers --
   the API key never reaches the browser.
 
@@ -59,7 +62,8 @@ the expected category.
    - `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` -- from openrouter.ai.
 3. In the Supabase Dashboard SQL Editor, run `supabase/schema.sql`, then `supabase/seed.sql`.
    - If you already ran these against an existing project before the `app_settings` table was added, run `supabase/add_settings.sql` instead (idempotent, safe to run once against an already-seeded project without duplicating menu/order data).
-4. In Supabase Dashboard → Authentication → Users, manually create one admin user (email + password) for the `/admin` login.
+   - If you already ran these against an existing project before the order page (`/`) was auth-gated, also run `supabase/tighten_order_insert.sql` to move `orders`/`order_items` INSERT from `anon, authenticated` to `authenticated` only (idempotent).
+4. In Supabase Dashboard → Authentication → Users, manually create at least one user (email + password) -- the same login works for both `/` (order-taking) and `/admin`.
 5. `npm run dev`, open `http://localhost:3000`.
 
 ## The three AI features

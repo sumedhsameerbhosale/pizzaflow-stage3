@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import Logo from "@/components/Logo";
 
 export default function AdminNav({
   active,
@@ -14,20 +15,21 @@ export default function AdminNav({
   async function handleLogout() {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push("/admin/login");
+    router.push("/login");
     router.refresh();
   }
 
   const linkClass = (name: "orders" | "insights" | "settings") =>
     `rounded-md px-3 py-1.5 text-sm font-medium ${
       active === name
-        ? "bg-blue-700 text-white"
+        ? "bg-accent text-white"
         : "text-gray-700 hover:bg-gray-100"
     }`;
 
   return (
     <nav className="mb-6 flex items-center justify-between border-b pb-4">
       <div className="flex items-center gap-2">
+        <Logo className="h-6 w-6" />
         <span className="mr-2 text-lg font-bold text-gray-900">PizzaFlow Admin</span>
         <Link href="/admin/orders" className={linkClass("orders")}>
           Orders
