@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { getDiscountQtyThreshold } from "@/lib/settings";
-import AdminNav from "@/components/admin/AdminNav";
 import OrdersTable from "@/components/admin/OrdersTable";
 import type { OrderWithItems } from "@/lib/types";
 
@@ -19,7 +18,6 @@ export default async function AdminOrdersPage() {
 
   return (
     <>
-      <AdminNav active="orders" />
       <h1 className="mb-4 text-xl font-bold text-foreground">All Orders</h1>
       {error ? (
         <p className="text-destructive">Could not load orders: {error.message}</p>

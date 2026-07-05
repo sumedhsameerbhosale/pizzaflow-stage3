@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import AdminNav from "@/components/admin/AdminNav";
 import MenuManager from "@/components/admin/MenuManager";
 import type { MenuItem } from "@/lib/types";
 
@@ -13,7 +12,6 @@ export default async function AdminMenuPage() {
 
   return (
     <>
-      <AdminNav active="menu" />
       <h1 className="mb-4 text-xl font-bold text-foreground">Menu</h1>
       {error || !menuItems ? (
         <p className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">

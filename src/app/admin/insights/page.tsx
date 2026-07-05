@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import AdminNav from "@/components/admin/AdminNav";
 import InsightsCard from "@/components/admin/InsightsCard";
 import { computeInsightStats, narrateInsights } from "@/lib/insights";
 import type { OrderWithItems } from "@/lib/types";
@@ -16,7 +15,6 @@ export default async function AdminInsightsPage() {
 
   return (
     <>
-      <AdminNav active="insights" />
       <h1 className="mb-4 text-xl font-bold text-foreground">Sales &amp; Ops Insights</h1>
       {error ? (
         <p className="text-destructive">Could not load orders: {error.message}</p>
